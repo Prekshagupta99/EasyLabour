@@ -1,5 +1,5 @@
-import Footer from './components/Footer';
-import Navbar from './components/Navbar';
+import Footer from '@/components/Footer';
+import Navbar from '@/components/Navbar';
 import './globals.css';
 
 export const metadata = {
@@ -7,14 +7,20 @@ export const metadata = {
   description: 'Low-cost trusted services from local labourers like electricians, plumbers & more.',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
       <body>
+
         <Navbar />
         {children}
-        <Footer/>
+        <Footer />
       </body>
     </html>
   );
 }
+
