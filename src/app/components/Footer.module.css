@@ -1,0 +1,64 @@
+.footer {
+  background: #f9f9f9;
+  padding: 40px 60px;
+  font-family: sans-serif;
+  border-top: 1px solid #ddd;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  margin-bottom: 30px;
+}
+
+.column h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #333;
+}
+
+.column p {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.column li {
+  margin-bottom: 8px;
+}
+
+.column a {
+  color: #444;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.column a:hover {
+  text-decoration: underline;
+}
+
+.socialIcons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.socialIcons img {
+  width: 24px;
+  height: 24px;
+}
+
+.bottom {
+  border-top: 1px solid #ccc;
+  padding-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #777;
+}
