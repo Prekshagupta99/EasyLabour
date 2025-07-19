@@ -1,87 +1,157 @@
 'use client';
-
+import { auth } from '@/firebase';
+import {
+  RecaptchaVerifier,
+  signInWithEmailAndPassword,
+  signInWithPhoneNumber,
+} from 'firebase/auth';
 import { useState } from 'react';
 
-export default function Login() {
-  const [showEmailLogin, setShowEmailLogin] = useState(false);
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+    confirmationResult?: any;
+  }
+}
+
+export default function LoginPage() {
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailMode, setEmailMode] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        'sign-in-button',
+        {
+          size: 'invisible',
+          callback: () => {
+            sendOtp();
+          },
+          'expired-callback': () => {
+            window.recaptchaVerifier?.clear();
+            delete window.recaptchaVerifier;
+          },
+        }
+      );
+      window.recaptchaVerifier.render().catch(console.error);
+    }
+  };
+
+  const sendOtp = async () => {
+    if (!phone || phone.length !== 10) {
+      alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setupRecaptcha(); // Ensure reCAPTCHA is set up
+    const appVerifier = window.recaptchaVerifier;
+
+    try {
+      const confirmation = await signInWithPhoneNumber(auth, '+91' + phone, appVerifier);
+      window.confirmationResult = confirmation;
+      setOtpSent(true);
+      alert('OTP sent to your phone');
+    } catch (error) {
+      alert('Error sending OTP: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
+  const verifyOtp = async () => {
+    try {
+      await window.confirmationResult.confirm(otp);
+      alert('Phone login successful!');
+    } catch (error) {
+      alert('Invalid OTP: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
+  const loginWithEmail = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert('Email login successful!');
+    } catch (error) {
+      alert('Email login failed: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-semibold mb-6 text-center text-teal-700">Login to EasyLabour</h1>
+    <div className="p-8 max-w-md mx-auto space-y-4">
+      <h1 className="text-2xl font-bold mb-4 text-center">Login to EasyLabour</h1>
 
-        {/* Phone Login Section */}
-        <form className="space-y-4 mb-6">
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-            <input
-              type="tel"
-              id="phone"
-              placeholder="Enter your phone number"
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="otp" className="block text-sm font-medium text-gray-700">OTP</label>
+      {!emailMode ? (
+        <>
+          <input
+            type="tel"
+            placeholder="Enter phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          {otpSent && (
             <input
               type="text"
-              id="otp"
               placeholder="Enter OTP"
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full p-2 border rounded mt-2"
             />
-          </div>
-
+          )}
           <button
-            type="submit"
-            className="w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition"
+            id="sign-in-button"
+            onClick={otpSent ? verifyOtp : sendOtp}
+            className="w-full bg-teal-600 text-white py-2 rounded mt-2"
           >
-            Verify & Continue
+            {otpSent ? 'Verify OTP' : 'Send OTP'}
           </button>
-        </form>
 
-        {/* Divider */}
-        <div className="text-center text-sm text-gray-500 mb-4">Don’t want to login with phone?</div>
-
-        {/* Toggle Email Login Section */}
-        {!showEmailLogin ? (
-          <button
-            onClick={() => setShowEmailLogin(true)}
-            className="w-full bg-gray-100 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition"
-          >
-            Login with Email Instead
-          </button>
-        ) : (
-          <form className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                id="email"
-                placeholder="Enter your email"
-                className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-                className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition"
+          <p className="text-sm text-center mt-2">
+            Or{' '}
+            <span
+              onClick={() => setEmailMode(true)}
+              className="text-teal-600 underline cursor-pointer"
             >
-              Login with Email
-            </button>
-          </form>
-        )}
-      </div>
-    </main>
+              login using Email
+            </span>
+          </p>
+        </>
+      ) : (
+        <>
+          <input
+            type="email"
+            placeholder="Enter email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          <input
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border rounded mt-2"
+          />
+          <button
+            onClick={loginWithEmail}
+            className="w-full bg-teal-600 text-white py-2 rounded mt-2"
+          >
+            Login with Email
+          </button>
+          <p className="text-sm text-center mt-2">
+            Prefer phone login?{' '}
+            <span
+              onClick={() => setEmailMode(false)}
+              className="text-teal-600 underline cursor-pointer"
+            >
+              Click here
+            </span>
+          </p>
+        </>
+      )}
+    </div>
   );
 }
